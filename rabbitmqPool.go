@@ -300,7 +300,7 @@ func (S *Service) backChannelId(channelId int,ch *amqp.Channel){
 	return
 }
 
-//PutIntoQueue 支持简单和延迟队列 
+//PutIntoQueue 支持简单和延迟队列
 func (S *Service) PutIntoQueue(exchangeName string, routeKey string,
 	notice interface{}, delayTime int) (message interface{}, puberr error ){
 	defer func() {

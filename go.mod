@@ -1,4 +1,4 @@
-module github.com/Braveheart7854/rabbitmqPool
+module github.com/lazy-tortoise/rabbitmqPool
 
 go 1.13
 
