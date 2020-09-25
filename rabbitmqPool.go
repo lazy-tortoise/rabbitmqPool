@@ -6,6 +6,7 @@ import (
 	"github.com/streadway/amqp"
 	"log"
 	"math/rand"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -87,7 +88,10 @@ func (S *Service) connect()*amqp.Connection{
 }
 
 func (S *Service) recreateChannel(connectId int, err error)(ch *amqp.Channel){
-	if strings.Index(err.Error(),"channel/connection is not open") >= 0 || strings.Index(err.Error(),"CHANNEL_ERROR - expected 'channel.open'") >=0{
+	if strings.Index(err.Error(),
+		"channel/connection is not open") >= 0 ||
+		strings.Index(err.Error(),
+			"CHANNEL_ERROR - expected 'channel.open'") >=0{
 		//S.connections[connectId].Close()
 		var newConn *amqp.Connection
 		if S.connections[connectId].IsClosed() {
@@ -232,18 +236,35 @@ func (S *Service) dataForm(notice interface{})string{
 	return string(body)
 }
 
-func (S *Service) publish(channelId int,ch *amqp.Channel,exchangeName string, routeKey string,data string)(err error){
+func (S *Service) publish(channelId int,ch *amqp.Channel,exchangeName string,
+	routeKey string,data string, delayTime int)(err error){
 
-	err = ch.Publish(
-		exchangeName, // exchange
-		routeKey,     //severityFrom(os.Args), // routing key
-		false,        // mandatory
-		false,        // immediate
-		amqp.Publishing{
-			DeliveryMode: amqp.Persistent,
-			ContentType: "application/json",
-			Body:        []byte(data),
-		})
+	if delayTime > 0 {
+		errNew := ch.Publish(
+			exchangeName, // exchange
+			routeKey,     //severityFrom(os.Args), // routing key
+			false,        // mandatory
+			false,        // immediate
+			amqp.Publishing{
+				DeliveryMode: amqp.Persistent,
+				ContentType: "application/json",
+				Body:        []byte(data),
+				Expiration: strconv.Itoa(delayTime),
+			})
+		err = errNew
+	}else{
+		errNew := ch.Publish(
+			exchangeName, // exchange
+			routeKey,     //severityFrom(os.Args), // routing key
+			false,        // mandatory
+			false,        // immediate
+			amqp.Publishing{
+				DeliveryMode: amqp.Persistent,
+				ContentType: "application/json",
+				Body:        []byte(data),
+			})
+		err = errNew
+	}
 
 	if err != nil {
 		if strings.Index(err.Error(), "channel/connection is not open") >= 0 {
@@ -253,7 +274,8 @@ func (S *Service) publish(channelId int,ch *amqp.Channel,exchangeName string, ro
 	return
 }
 
-func (S *Service) rePublish(channelId int,exchangeName string, errmsg error,routeKey string,data string)(err error){
+func (S *Service) rePublish(channelId int,exchangeName string,
+	errmsg error,routeKey string,data string)(err error){
 	//fmt.Println("rePublish")
 
 	ch := S.reDeclareExchange(channelId, exchangeName, errmsg )
@@ -278,7 +300,9 @@ func (S *Service) backChannelId(channelId int,ch *amqp.Channel){
 	return
 }
 
-func (S *Service) PutIntoQueue(exchangeName string, routeKey string, notice interface{}) (message interface{}, puberr error ){
+//PutIntoQueue 支持简单和延迟队列 
+func (S *Service) PutIntoQueue(exchangeName string, routeKey string,
+	notice interface{}, delayTime int) (message interface{}, puberr error ){
 	defer func() {
 		msg := recover()
 		if msg != nil {
@@ -305,7 +329,7 @@ func (S *Service) PutIntoQueue(exchangeName string, routeKey string, notice inte
 	var tryTime = 1
 
 	for  {
-		puberr = S.publish(channelId, ch, exchangeName, routeKey, data)
+		puberr = S.publish(channelId, ch, exchangeName, routeKey, data, delayTime)
 		if puberr !=nil {
 			if tryTime <= retryCount {
 				//log.Printf("%s: %s", "Failed to publish a message, try again.", puberr)
