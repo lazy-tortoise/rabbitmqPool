@@ -20,14 +20,22 @@ github.com/streadway/amqp
 - go get github.com/Braveheart7854/rabbitmqPool
 
 - 代码如下
--     rabbitmqPool.AmqpServer = rabbitmqPool.Service{
-- 		AmqpUrl:"amqp://guest:guest@localhost:5672/",
-- 		ConnectionNum:10,
-- 		ChannelNum:100,
-- 	  }
--     rabbitmqPool.InitAmqp()	
-- 	  message,err := rabbitmqPool.AmqpServer.PutIntoQueue(ExchangeName,RouteKey,data)
-- 	  if err != nil{
-- 	  //若有错误，则表示消息发送失败，做好失败消息处理
-- 	  rabbitmqPool.Logger.Notice(message)
--  	  }
+```go
+rabbitmqPool.AmqpServer = rabbitmqPool.Service{
+    AmqpUrl:"amqp://guest:guest@localhost:5672/",
+    ConnectionNum:10,
+    ChannelNum:100,
+}
+rabbitmqPool.InitAmqp()	
+message,err := rabbitmqPool.AmqpServer.PutIntoQueue(ExchangeName,RouteKey,data)
+if err != nil{
+    //若有错误，则表示消息发送失败，做好失败消息处理
+ 	rabbitmqPool.Logger.Notice(message)
+}
+```
+
+
+# 参考：
+https://www.cnblogs.com/bigdataZJ/p/go-custom-pool.html
+
+
