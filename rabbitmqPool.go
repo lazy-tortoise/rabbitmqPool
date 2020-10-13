@@ -400,14 +400,3 @@ func (S *Service) Close() {
 	}
 }
 
-//Close 关闭连接池
-func (S *Service) Close() {
-	//When a channel's connection is closed, so is the channel.
-	//https://www.rabbitmq.com/channels.html#lifecycle
-	for i := 0; i < len(AmqpServer.connections); i++ {
-		if AmqpServer.connections[i] != nil {
-			err := AmqpServer.connections[i].Close()
-			failOnError(err, "关闭rabbitmq连接失败")
-		}
-	}
-}
