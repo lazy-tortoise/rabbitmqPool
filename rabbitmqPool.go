@@ -1,15 +1,15 @@
 package rabbitmqPool
 
 import (
-	"encoding/json"
 	"errors"
-	"github.com/streadway/amqp"
 	"log"
 	"math/rand"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/streadway/amqp"
 )
 
 type Service struct {
@@ -229,13 +229,13 @@ func (S *Service) lockWriteChannel(channelId int, cha channel) {
 	S.channels[channelId] = cha
 }
 
-func (S *Service) dataForm(notice interface{}) string {
-	body, err := json.Marshal(notice)
-	if err != nil {
-		log.Panic(err)
-	}
-	return string(body)
-}
+// func (S *Service) dataForm(notice interface{}) string {
+// 	body, err := json.Marshal(notice)
+// 	if err != nil {
+// 		log.Panic(err)
+// 	}
+// 	return string(body)
+// }
 
 func (S *Service) publish(channelId int, ch *amqp.Channel, exchangeName string,
 	routeKey string, data string, delayTime int) (err error) {
@@ -323,7 +323,7 @@ func (S *Service) backChannelId(channelId int, ch *amqp.Channel) {
 
 //PutIntoQueue 支持简单和延迟队列
 func (S *Service) PutIntoQueue(exchangeName string, routeKey string,
-	notice interface{}, delayTime int) (message interface{}, puberr error) {
+	notice string, delayTime int) (message interface{}, puberr error) {
 	defer func() {
 		msg := recover()
 		if msg != nil {
@@ -346,7 +346,7 @@ func (S *Service) PutIntoQueue(exchangeName string, routeKey string,
 	}
 	ch = S.declareExchange(ch, exchangeName, channelId)
 
-	data := S.dataForm(notice)
+	data := notice
 	var tryTime = 1
 
 	for {
@@ -399,4 +399,3 @@ func (S *Service) Close() {
 		}
 	}
 }
-
