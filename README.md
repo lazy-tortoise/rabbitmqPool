@@ -17,7 +17,7 @@
 github.com/streadway/amqp
 
 # 开始使用
-- go get github.com/Braveheart7854/rabbitmqPool
+- go get github.com/lazy-tortoise/rabbitmqPool
 
 - 代码如下
 ```go
